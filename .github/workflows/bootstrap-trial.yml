@@ -1,0 +1,68 @@
+name: Bootstrap cleaning-trial assets
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decode and commit PNG icons
+        run: |
+          python3 - <<'PY'
+          import base64, pathlib
+          for name in ("icon-192.png", "icon-512.png"):
+              src = pathlib.Path(name + ".b64")
+              if not src.exists():
+                  print("missing", src)
+                  continue
+              pathlib.Path(name).write_bytes(base64.b64decode(src.read_text().strip()))
+              print("wrote", name, pathlib.Path(name).stat().st_size)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add icon-192.png icon-512.png
+          if git diff --cached --quiet; then
+            echo "Icons already up to date"
+          else
+            git commit -m "Add PWA icons for Add to Home Screen"
+            git push
+          fi
+
+      - name: Enable GitHub Pages from main, root folder
+        run: |
+          set +e
+          echo "Attempting to enable GitHub Pages..."
+          POST_OUT=$(gh api --method POST /repos/${GITHUB_REPOSITORY}/pages \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -f build_type=legacy \
+            -f source[branch]=main \
+            -f source[path]=/ 2>&1)
+          POST_CODE=$?
+          echo "POST exit=$POST_CODE"
+          echo "$POST_OUT"
+          if [ $POST_CODE -ne 0 ]; then
+            PUT_OUT=$(gh api --method PUT /repos/${GITHUB_REPOSITORY}/pages \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -f build_type=legacy \
+              -f source[branch]=main \
+              -f source[path]=/ 2>&1)
+            PUT_CODE=$?
+            echo "PUT exit=$PUT_CODE"
+            echo "$PUT_OUT"
+            if [ $PUT_CODE -ne 0 ] && [ $POST_CODE -ne 0 ]; then
+              exit 1
+            fi
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

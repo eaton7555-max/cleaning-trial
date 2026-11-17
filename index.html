@@ -9,6 +9,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Cleaning Trial">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="icon" href="./icon-192.png">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -75,7 +77,7 @@
     <div class="row">
       <div style="flex:1">
         <label style="font-size:0.75rem; color:#7dd3fc;">Standard $/sqft</label>
-        <input id="stdRate" type="number" step="0.001" value="0.078" />
+        <input id="stdRate" type="number" step="0.00001" value="0.07828" />
       </div>
       <div style="flex:1">
         <label style="font-size:0.75rem; color:#7dd3fc;">Deep clean $/sqft</label>
@@ -104,7 +106,7 @@
       <input id="sqft" type="number" placeholder="Total square footage" />
       <div class="row">
         <select id="rateType">
-          <option value="0.078" id="optStd">Standard ($0.078/sqft)</option>
+          <option value="0.07828" id="optStd">Standard ($0.07828/sqft)</option>
           <option value="0.12" id="optDeep">Deep Clean ($0.12/sqft)</option>
           <option value="custom" id="optCustom">Custom rate</option>
         </select>
@@ -166,7 +168,7 @@
         paymentTerms: "Net (days)", discountDefault: "Default discount %", saveBiz: "Save Business Info",
         client: "Customer name", address: "Customer address", phone: "Phone (optional)", email: "Email (optional)",
         crew: "Cleaner / Crew name", pricing: "Pricing Method", rooms: "By Room Type", sqft: "By Square Footage",
-        addLine: "+ Add Room", sqftPh: "Total square footage", std: "Standard ($0.078/sqft)", deepRate: "Deep Clean ($0.12/sqft)", custom: "Custom rate", customPh: "Custom $/sqft",
+        addLine: "+ Add Room", sqftPh: "Total square footage", std: "Standard ($0.07828/sqft)", deepRate: "Deep Clean ($0.12/sqft)", custom: "Custom rate", customPh: "Custom $/sqft",
         service: "Service Level", maint: "Maintenance Clean", deep: "Deep Clean", move: "Move-in / Move-out", post: "Post-construction",
         freq: "Frequency", once: "One-time (full price)", week: "Weekly (15% off)", bi: "Bi-weekly (10% off)", month: "Monthly (5% off)",
         eco: "Eco-friendly / non-toxic chemicals (+15%)", tax: "Tax %", extraDisc: "Extra discount %",
@@ -185,7 +187,7 @@
         paymentTerms: "Net (días)", discountDefault: "Descuento predeterminado %", saveBiz: "Guardar información",
         client: "Nombre del cliente", address: "Dirección del cliente", phone: "Teléfono (opcional)", email: "Correo (opcional)",
         crew: "Nombre del limpiador / equipo", pricing: "Método de precio", rooms: "Por tipo de habitación", sqft: "Por pies cuadrados",
-        addLine: "+ Agregar habitación", sqftPh: "Pies cuadrados totales", std: "Estándar ($0.078/pie²)", deepRate: "Limpieza profunda ($0.12/pie²)", custom: "Tarifa personalizada", customPh: "Tarifa personalizada $/pie²",
+        addLine: "+ Agregar habitación", sqftPh: "Pies cuadrados totales", std: "Estándar ($0.07828/pie²)", deepRate: "Limpieza profunda ($0.12/pie²)", custom: "Tarifa personalizada", customPh: "Tarifa personalizada $/pie²",
         service: "Nivel de servicio", maint: "Limpieza de mantenimiento", deep: "Limpieza profunda", move: "Mudanza entrada/salida", post: "Post-construcción",
         freq: "Frecuencia", once: "Una vez (precio completo)", week: "Semanal (15% descuento)", bi: "Quincenal (10% descuento)", month: "Mensual (5% descuento)",
         eco: "Químicos ecológicos / sin tóxicos (+15%)", tax: "Impuesto %", extraDisc: "Descuento extra %",
@@ -201,7 +203,7 @@
 
     const KEY = "cleaning-jobs-v1";
     const BIZ_KEY = "cleaning-biz-v1";
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxljqDbThH-aAcGHFdvsyS854LLx43WWgFC8TEKdEO7ffRtn8HJl8UM0yK2DIo5NYmyrQ/exec";
+    const SHEET_URL = "";
 
     function tr(key) { return t[lang][key] || key; }
 
@@ -227,8 +229,6 @@
       document.getElementById("optSqft").textContent = tr("sqft");
       document.getElementById("addLine").textContent = tr("addLine");
       document.getElementById("sqft").placeholder = tr("sqftPh");
-      document.getElementById("optStd").textContent = tr("std");
-      document.getElementById("optDeep").textContent = tr("deepRate");
       document.getElementById("optCustom").textContent = tr("custom");
       document.getElementById("customRate").placeholder = tr("customPh");
       document.getElementById("lblService").textContent = tr("service");
@@ -253,12 +253,13 @@
         const val = sel.value;
         sel.innerHTML = t[lang].roomsList.map(s => `<option ${s===val?"selected":""}>${s}</option>`).join("");
       });
+      updateRateOptions();
       render();
     }
 
     function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
     function save(items) { localStorage.setItem(KEY, JSON.stringify(items)); }
-    function loadBiz() { try { return JSON.parse(localStorage.getItem(BIZ_KEY)) || { paymentTerms: 14, discountDefault: 0, stdRate: 0.078, deepRate: 0.12 }; } catch { return { paymentTerms: 14, discountDefault: 0, stdRate: 0.078, deepRate: 0.12 }; } }
+    function loadBiz() { try { return JSON.parse(localStorage.getItem(BIZ_KEY)) || { paymentTerms: 14, discountDefault: 0, stdRate: 0.07828, deepRate: 0.12 }; } catch { return { paymentTerms: 14, discountDefault: 0, stdRate: 0.07828, deepRate: 0.12 }; } }
     function saveBiz(biz) { localStorage.setItem(BIZ_KEY, JSON.stringify(biz)); }
     function money(n) { return "$" + Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function nextInvoiceNum() { const jobs = load(); const nums = jobs.map(j => j.invoiceNum || 0); return Math.max(1000, ...nums) + 1; }
@@ -307,6 +308,7 @@
     }
 
     async function sendToSheet(job) {
+      if (!SHEET_URL) return;
       const c = calc(job);
       let services = "";
       if (job.pricingMethod === "sqft") {
@@ -552,7 +554,7 @@
       const biz = { name: document.getElementById("bizName").value.trim(), address: document.getElementById("bizAddress").value.trim(),
         phone: document.getElementById("bizPhone").value.trim(), paymentTerms: parseInt(document.getElementById("paymentTerms").value) || 14,
         discountDefault: parseFloat(document.getElementById("discountDefault").value) || 0,
-        stdRate: parseFloat(document.getElementById("stdRate").value) || 0.078,
+        stdRate: parseFloat(document.getElementById("stdRate").value) || 0.07828,
         deepRate: parseFloat(document.getElementById("deepRate").value) || 0.12 };
       saveBiz(biz); alert(tr("bizSaved")); updateRateOptions();
     };
@@ -562,7 +564,7 @@
 
     function updateRateOptions() {
       const biz = loadBiz();
-      const std = biz.stdRate || 0.078;
+      const std = biz.stdRate || 0.07828;
       const deep = biz.deepRate || 0.12;
       const optStd = document.getElementById("optStd");
       const optDeep = document.getElementById("optDeep");
@@ -585,7 +587,7 @@
     updateRateOptions();
     addLineRow();
     applyLang();
-    if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js").catch(() => {}); }
+    if ("serviceWorker" in navigator) { navigator.serviceWorker.register("./sw.js").catch(() => {}); }
   </script>
 </body>
 </html>
