@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaning-trial-v2";
+const CACHE_NAME = "cleaning-trial-v3";
 const PRECACHE_URLS = [
   "./",
   "./index.html",
